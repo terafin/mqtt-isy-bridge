@@ -6,8 +6,6 @@ const logging = require('./homeautomation-js-lib/logging.js')
 const config = require('./homeautomation-js-lib/config_loading.js')
 const health = require('./homeautomation-js-lib/health.js')
 
-var isConnected = false
-
 // Config
 const config_path = process.env.CONFIG_PATH
 const isyIP = process.env.ISY_IP
@@ -34,12 +32,76 @@ if (_.isNil(topic_prefix)) {
 
 
 function variableChangeCallback(isy, variable) {
-    logging.debug('variable changed')
-        //logging.debug('variable changed: ' + variable)
+    logging.debug('variable changed: ' + variable)
+}
+
+function publishDeviceUpdate(device, topic, type) {
+    logging.debug('publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
+
+    var value = null
+
+    switch (type) {
+        case 'motion':
+            value = device.getCurrentMotionSensorState()
+            break
+
+        case 'switch':
+            value = device.getCurrentLightState()
+            break
+
+        default:
+            break
+    }
+
+    if (!_.isNil(value)) {
+        switch (value) {
+            case true:
+                logging.debug(' boolean true')
+                value = '1'
+                break
+
+            case false:
+                logging.debug(' boolean false')
+                value = '0'
+                break
+
+            case 'true':
+                logging.debug(' text true')
+                value = '1'
+                break
+
+            case 'false':
+                logging.debug(' text false')
+                value = '0'
+                break
+
+            default:
+                logging.debug(' raw value: + ' + value)
+                value = '' + value
+                break
+        }
+
+        client.publish(topic, value)
+    } else {
+        logging.debug('No value found')
+    }
 }
 
 function deviceChangeCallback(isy, device) {
     logging.debug('device changed: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType)
+    const address = device.address
+
+    var topic = topicForId(address)
+    var type = typeForId(address)
+
+    if (_.isNil(topic)) {
+        topic = topic_prefix + device.address
+        type = 'switch'
+    }
+    if (!_.isNil(topic) && !_.isNil(type)) {
+        logging.debug(' => found topic: ' + topic + '  type: ' + type)
+        publishDeviceUpdate(device, topic, type)
+    }
 }
 
 function handleISYInitialized() {
@@ -75,14 +137,12 @@ if (_.isNil(client)) {
 client.on('connect', () => {
     logging.info('MQTT Connected')
     client.subscribe('#')
-    isConnected = true
     health.healthyEvent()
 })
 
 client.on('disconnect', () => {
     logging.info('Reconnecting...')
     client.connect(host)
-    isConnected = false
     health.unhealthyEvent()
 })
 
