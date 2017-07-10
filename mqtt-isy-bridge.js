@@ -27,9 +27,8 @@ if (_.isNil(host)) {
 
 if (_.isNil(topic_prefix)) {
     logging.warn('empty topic prefix, using /isy')
-    topic_prefix = '/isy'
+    topic_prefix = '/isy/'
 }
-
 
 function variableChangeCallback(isy, variable) {
     logging.debug('variable changed: ' + variable)
