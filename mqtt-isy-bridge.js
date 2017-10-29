@@ -171,7 +171,7 @@ client.on('message', (topic, message) => {
     }
 })
 
-function publishToISY(deviceID, value) {
+function publishToISY(deviceID, value, type) {
     logging.info('publish to ISY', {
         action: 'set-value',
         refID: deviceID,
@@ -183,10 +183,18 @@ function publishToISY(deviceID, value) {
     if (_.isNil(device)) {
         logging.error('could not resolve device: ' + deviceID)
     } else {
-        device.sendLightCommand(value, function(result) {
-            logging.error('value set: ' + value + '   result: ' + result)
+        if (type === 'lock') {
+            device.sendLockCommand(value, function(result) {
+                logging.error('value set: ' + value + '   result: ' + result)
 
-        })
+            })
+
+        } else {
+            device.sendLightCommand(value, function(result) {
+                logging.error('value set: ' + value + '   result: ' + result)
+
+            })
+        }
     }
 }
 
@@ -198,7 +206,18 @@ function handleSwitchAction(device, value) {
     else if (numberValue < 0)
         numberValue = 0
 
-    publishToISY(device, numberValue)
+    publishToISY(device, numberValue, 'switch')
+}
+
+function handleLockAction(device, value) {
+    var numberValue = _.toNumber(value)
+
+    if (numberValue > 0)
+        numberValue = 255
+    else if (numberValue < 0)
+        numberValue = 0
+
+    publishToISY(device, numberValue, 'lock')
 }
 
 function handleDeviceAction(type, device, value) {
@@ -207,8 +226,12 @@ function handleDeviceAction(type, device, value) {
             handleSwitchAction(device, value)
             break
 
+        case 'lock':
+            handleLockAction(device, value)
+            break
+
         default:
-            publishToISY(device, value)
+            publishToISY(device, value, 'switch')
             break
     }
 }
