@@ -12,7 +12,7 @@
     },
     "dependencies": {
         "express": "*",
-        "isy-js": "^0.4.4",
+        "isy-js": "git://github.com/terafin/isy-js.git",
         "js-yaml": "^3.8.3",
         "lodash": "^4.17.4",
         "mqtt": "^2.6.2",

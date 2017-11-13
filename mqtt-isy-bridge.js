@@ -35,11 +35,19 @@ function variableChangeCallback(isy, variable) {
 }
 
 function publishDeviceUpdate(device, topic, type) {
-    logging.debug('publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
+    console.log('publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
 
     var value = null
 
     switch (type) {
+        case 'energyusage':
+            value = device.getGenericProperty('CC')
+            break
+
+        case 'climate':
+            value = device.getFormattedStatus()
+            break
+
         case 'motion':
             value = device.getCurrentMotionSensorState()
             break
