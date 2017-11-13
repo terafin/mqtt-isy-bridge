@@ -35,13 +35,18 @@ function variableChangeCallback(isy, variable) {
 }
 
 function publishDeviceUpdate(device, topic, type) {
-    console.log('publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
+    logging.info('publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
 
     var value = null
 
     switch (type) {
         case 'energyusage':
-            value = device.getGenericProperty('CC')
+            var amps = device.getGenericProperty('CC')
+            var volts = device.getGenericProperty('CV')
+            if (!_.isNil(amps) && !_.isNil(volts)) {
+                value = ((volts * amps) / 10000).toFixed(2)
+            }
+
             break
 
         case 'climate':
