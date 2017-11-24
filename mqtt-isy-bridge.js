@@ -32,7 +32,8 @@ if (_.isNil(topic_prefix)) {
 
 function variableChangeCallback(isy, variable) {
     logging.debug('variable changed: ' + variable)
-    health.healthyEvent()
+    if (client.connected)
+        health.healthyEvent()
 }
 
 function publishDeviceUpdate(device, topic, type) {
@@ -136,7 +137,8 @@ function publishDeviceUpdate(device, topic, type) {
 
         client.publish(topic, value)
     }
-    health.healthyEvent()
+    if (client.connected)
+        health.healthyEvent()
 }
 
 function deviceChangeCallback(isy, device) {
@@ -167,7 +169,8 @@ function handleISYInitialized() {
         logging.debug('  connectionType: ' + device.connectionType)
         logging.debug('  batteryOperated: ' + device.batteryOperated)
     }, this)
-    health.healthyEvent()
+    if (client.connected)
+        health.healthyEvent()
 }
 
 // Set up modules
