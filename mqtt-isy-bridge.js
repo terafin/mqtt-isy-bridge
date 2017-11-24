@@ -217,7 +217,7 @@ client.on('message', (topic, message) => {
     }
 })
 
-function _publishToISY(deviceID, value, type) {
+function _publishToISY(device, value, type) {
     if (type === 'lock') {
         device.sendLockCommand(value, function(result) {
             logging.error('value set: ' + value + '   result: ' + result)
@@ -242,8 +242,8 @@ function publishToISY(deviceID, value, type) {
     if (_.isNil(device)) {
         logging.error('could not resolve device: ' + deviceID)
     } else {
-        _publishToISY(deviceID, value, type)
-        _publishToISY(deviceID, value, type)
+        _publishToISY(device, value, type)
+        _publishToISY(device, value, type)
     }
 
 }
