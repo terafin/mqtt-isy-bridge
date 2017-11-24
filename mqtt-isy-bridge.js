@@ -32,6 +32,7 @@ if (_.isNil(topic_prefix)) {
 
 function variableChangeCallback(isy, variable) {
     logging.debug('variable changed: ' + variable)
+    health.healthyEvent()
 }
 
 function publishDeviceUpdate(device, topic, type) {
@@ -64,14 +65,18 @@ function publishDeviceUpdate(device, topic, type) {
             Object.keys(propertyMapping).forEach(property => {
                 var propertyValue = device.getGenericProperty(property)
                 if (!_.isNil(propertyValue)) {
-                    topicsToPublish.push(topic + '/' + property)
-                    valuesToPublish.push(propertyValue)
+                    topicsToPublish.push(topic + '/' + propertyMapping[property])
+                    valuesToPublish.push(propertyValue.toString())
                 }
             });
 
-            var temperature = Math.round(device.currentState / 2.0)
-            topicsToPublish.push('temperature')
-            valuesToPublish.push(temperature)
+            if (!_.isNil(device.currentState)) {
+                var temperature = Math.round(device.currentState / 2.0)
+                if (temperature !== 0) {
+                    topicsToPublish.push(topic + '/' + 'temperature')
+                    valuesToPublish.push(temperature.toString())
+                }
+            }
 
             break
 
@@ -121,15 +126,17 @@ function publishDeviceUpdate(device, topic, type) {
         topicsToPublish.push(topic)
         valuesToPublish.push(value)
 
-        for (let index = 0; index < topicsToPublish.length; index++) {
-            const topic = topicsToPublish[index];
-            const value = valuesToPublish[index];
-
-            client.publish(topic, value)
-        }
     } else {
         logging.debug('No value found')
     }
+
+    for (let index = 0; index < topicsToPublish.length; index++) {
+        const topic = topicsToPublish[index];
+        const value = valuesToPublish[index];
+
+        client.publish(topic, value)
+    }
+    health.healthyEvent()
 }
 
 function deviceChangeCallback(isy, device) {
@@ -160,6 +167,7 @@ function handleISYInitialized() {
         logging.debug('  connectionType: ' + device.connectionType)
         logging.debug('  batteryOperated: ' + device.batteryOperated)
     }, this)
+    health.healthyEvent()
 }
 
 // Set up modules
@@ -242,7 +250,7 @@ function publishToISY(deviceID, value, type) {
     if (_.isNil(device)) {
         logging.error('could not resolve device: ' + deviceID)
     } else {
-        _publishToISY(device, value, type)
+        _publishToISY(device, value, type) // Double publishing, something is wrong with my Insteon network - I think noise
         _publishToISY(device, value, type)
     }
 
