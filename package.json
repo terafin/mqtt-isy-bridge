@@ -11,18 +11,10 @@
         "start": "node mqtt-isy-bridge.js"
     },
     "dependencies": {
-        "express": "*",
         "isy-js": "git://github.com/terafin/isy-js.git",
-        "js-yaml": "^3.8.3",
+        "homeautomation-js-lib": "git://github.com/terafin/homeautomation-js-lib.git",
         "lodash": "^4.17.4",
-        "mqtt": "^2.6.2",
-        "path": "^0.12.7",
-        "request": "^2.81.0",
-        "url": "*",
-        "watch": "^1.0.2",
-        "winston": "^2.3.1",
-        "winston-logstash": "^0.3.0",
-        "winston-splunk-httplogger": "^1.2.2"
+        "mqtt": "^2.6.2"
     },
     "engines": {
         "node": ">=4"
