@@ -89,6 +89,10 @@ function publishDeviceUpdate(device, topic, type) {
             value = device.getCurrentMotionSensorState()
             break
 
+        case 'sensor':
+            value = device.getCurrentLightState()
+            break
+
         case 'switch':
             value = device.getCurrentLightState()
             break
@@ -289,6 +293,9 @@ function handleDeviceAction(type, device, value) {
 
         case 'lock':
             handleLockAction(device, value)
+            break
+
+        case 'sensor':
             break
 
         default:
