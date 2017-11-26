@@ -234,12 +234,15 @@ client.on('message', (topic, message) => {
 
 function _publishToISY(device, value, type) {
     if (type === 'lock') {
+        console.log('Sending lock command')
         device.sendLockCommand(value, function(result) {
             logging.error('value set: ' + value + '   result: ' + result)
-
         })
-
     } else {
+        // Double publishing, something is wrong with my Insteon network - I think noise
+        device.sendLightCommand(value, function(result) {
+            logging.error('value set: ' + value + '   result: ' + result)
+        })
         device.sendLightCommand(value, function(result) {
             logging.error('value set: ' + value + '   result: ' + result)
         })
@@ -257,7 +260,6 @@ function publishToISY(deviceID, value, type) {
     if (_.isNil(device)) {
         logging.error('could not resolve device: ' + deviceID)
     } else {
-        _publishToISY(device, value, type) // Double publishing, something is wrong with my Insteon network - I think noise
         _publishToISY(device, value, type)
     }
 
