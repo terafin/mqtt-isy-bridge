@@ -97,6 +97,10 @@ function publishDeviceUpdate(device, topic, type) {
             value = device.getCurrentLightState()
             break
 
+        case 'lock':
+            value = device.getCurrentLockState()
+            break
+
         default:
             break
     }
