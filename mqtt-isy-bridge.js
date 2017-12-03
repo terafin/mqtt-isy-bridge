@@ -18,6 +18,7 @@ const scenesInDeviceList = true
 const enableDebugLog = true
 var topic_prefix = process.env.TOPIC_PREFIX
 
+
 const ISY = require('isy-js')
 
 if (_.isNil(host)) {
@@ -48,7 +49,6 @@ function publishDeviceUpdate(device, topic, type) {
         },
         'publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
 
-
     var value = null
     var topicsToPublish = []
     var valuesToPublish = []
@@ -56,7 +56,7 @@ function publishDeviceUpdate(device, topic, type) {
 
     switch (type) {
         case 'energyusage':
-            if (updateType == ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+            if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
                 var amps = device.getGenericProperty('CC')
                 var volts = device.getGenericProperty('CV')
                 if (!_.isNil(amps) && !_.isNil(volts)) {
@@ -66,7 +66,7 @@ function publishDeviceUpdate(device, topic, type) {
             break
 
         case 'climatesensor':
-            if (updateType == ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+            if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
                 propertyMapping = {
                     'CLIHCS': 'operating_mode',
                     'CLISPH': 'heat_set_point',
@@ -104,11 +104,18 @@ function publishDeviceUpdate(device, topic, type) {
 
         case 'lock':
             if (updateType == ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+                logging.info('this is an update we want: ' + updatedProperty)
                 propertyMapping = {
                     'USRNUM': 'user_accessed',
                     'ALARM': 'alarm',
                     'ST': 'status',
                 }
+                Object.keys(propertyMapping).forEach(property => {
+                    if (property !== updatedProperty) {
+                        delete propertyMapping[property]
+                    }
+                });
+
             } else {
                 value = device.getCurrentLockState()
 
