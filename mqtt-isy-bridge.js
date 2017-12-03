@@ -75,10 +75,15 @@ function publishDeviceUpdate(device, topic, type) {
                     'CLIFS': 'fan',
                     'CLIMD': 'mode',
                 }
+                Object.keys(propertyMapping).forEach(property => {
+                    if (property != updatedProperty) {
+                        delete propertyMapping[property]
+                    }
+                });
             } else {
                 if (!_.isNil(device.currentState)) {
                     var temperature = Math.round(device.currentState / 2.0)
-                    if (temperature !== 0) {
+                    if (temperature != 0) {
                         topicsToPublish.push(topic + '/' + 'temperature')
                         valuesToPublish.push(temperature.toString())
                     }
@@ -103,15 +108,14 @@ function publishDeviceUpdate(device, topic, type) {
             break
 
         case 'lock':
-            if (updateType == ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
-                logging.info('this is an update we want: ' + updatedProperty)
+            if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
                 propertyMapping = {
                     'USRNUM': 'user_accessed',
                     'ALARM': 'alarm',
                     'ST': 'status',
                 }
                 Object.keys(propertyMapping).forEach(property => {
-                    if (property !== updatedProperty) {
+                    if (property != updatedProperty) {
                         delete propertyMapping[property]
                     }
                 });
