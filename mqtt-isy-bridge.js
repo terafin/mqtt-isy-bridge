@@ -18,7 +18,7 @@ const scenesInDeviceList = true
 const enableDebugLog = true
 var topic_prefix = process.env.TOPIC_PREFIX
 
-var ISY = require('isy-js')
+const ISY = require('isy-js')
 
 if (_.isNil(host)) {
     logging.warn('empty mqtt host, not starting')
@@ -37,7 +37,17 @@ function variableChangeCallback(isy, variable) {
 }
 
 function publishDeviceUpdate(device, topic, type) {
-    logging.info('publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
+    const updatedProperty = device.updatedProperty
+    const updateType = device.updateType
+
+    logging.info({
+            deviceProperty: updatedProperty,
+            updateType: updateType,
+            connectionType: device.connectionType,
+            topic: topic
+        },
+        'publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
+
 
     var value = null
     var topicsToPublish = []
@@ -46,32 +56,34 @@ function publishDeviceUpdate(device, topic, type) {
 
     switch (type) {
         case 'energyusage':
-            var amps = device.getGenericProperty('CC')
-            var volts = device.getGenericProperty('CV')
-            if (!_.isNil(amps) && !_.isNil(volts)) {
-                value = ((volts * amps) / 10000).toFixed(2)
+            if (updateType == ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+                var amps = device.getGenericProperty('CC')
+                var volts = device.getGenericProperty('CV')
+                if (!_.isNil(amps) && !_.isNil(volts)) {
+                    value = ((volts * amps) / 10000).toFixed(2)
+                }
             }
-
             break
 
         case 'climatesensor':
-            propertyMapping = {
-                'CLIHCS': 'operating_mode',
-                'CLISPH': 'heat_set_point',
-                'CLISPC': 'cool_set_point',
-                'CLIHUM': 'humidity',
-                'CLIFS': 'fan',
-                'CLIMD': 'mode',
-            }
-
-            if (!_.isNil(device.currentState)) {
-                var temperature = Math.round(device.currentState / 2.0)
-                if (temperature !== 0) {
-                    topicsToPublish.push(topic + '/' + 'temperature')
-                    valuesToPublish.push(temperature.toString())
+            if (updateType == ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+                propertyMapping = {
+                    'CLIHCS': 'operating_mode',
+                    'CLISPH': 'heat_set_point',
+                    'CLISPC': 'cool_set_point',
+                    'CLIHUM': 'humidity',
+                    'CLIFS': 'fan',
+                    'CLIMD': 'mode',
+                }
+            } else {
+                if (!_.isNil(device.currentState)) {
+                    var temperature = Math.round(device.currentState / 2.0)
+                    if (temperature !== 0) {
+                        topicsToPublish.push(topic + '/' + 'temperature')
+                        valuesToPublish.push(temperature.toString())
+                    }
                 }
             }
-
             break
 
         case 'climate':
@@ -91,14 +103,16 @@ function publishDeviceUpdate(device, topic, type) {
             break
 
         case 'lock':
-            value = device.getCurrentLockState()
+            if (updateType == ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+                propertyMapping = {
+                    'USRNUM': 'user_accessed',
+                    'ALARM': 'alarm',
+                    'ST': 'status',
+                }
+            } else {
+                value = device.getCurrentLockState()
 
-            propertyMapping = {
-                'USRNUM': 'user_accessed',
-                'ALARM': 'alarm',
-                'ST': 'status',
             }
-
             break
 
         default:
