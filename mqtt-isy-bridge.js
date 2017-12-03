@@ -42,6 +42,7 @@ function publishDeviceUpdate(device, topic, type) {
     var value = null
     var topicsToPublish = []
     var valuesToPublish = []
+    var propertyMapping = {}
 
     switch (type) {
         case 'energyusage':
@@ -54,7 +55,7 @@ function publishDeviceUpdate(device, topic, type) {
             break
 
         case 'climatesensor':
-            const propertyMapping = {
+            propertyMapping = {
                 'CLIHCS': 'operating_mode',
                 'CLISPH': 'heat_set_point',
                 'CLISPC': 'cool_set_point',
@@ -62,14 +63,6 @@ function publishDeviceUpdate(device, topic, type) {
                 'CLIFS': 'fan',
                 'CLIMD': 'mode',
             }
-
-            Object.keys(propertyMapping).forEach(property => {
-                var propertyValue = device.getGenericProperty(property)
-                if (!_.isNil(propertyValue)) {
-                    topicsToPublish.push(topic + '/' + propertyMapping[property])
-                    valuesToPublish.push(propertyValue.toString())
-                }
-            });
 
             if (!_.isNil(device.currentState)) {
                 var temperature = Math.round(device.currentState / 2.0)
@@ -99,11 +92,26 @@ function publishDeviceUpdate(device, topic, type) {
 
         case 'lock':
             value = device.getCurrentLockState()
+
+            propertyMapping = {
+                'USRNUM': 'user_accessed',
+                'ALARM': 'alarm',
+                'ST': 'status',
+            }
+
             break
 
         default:
             break
     }
+
+    Object.keys(propertyMapping).forEach(property => {
+        var propertyValue = device.getGenericProperty(property)
+        if (!_.isNil(propertyValue)) {
+            topicsToPublish.push(topic + '/' + propertyMapping[property])
+            valuesToPublish.push(propertyValue.toString())
+        }
+    });
 
     if (!_.isNil(value)) {
         switch (value) {
