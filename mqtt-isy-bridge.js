@@ -68,6 +68,7 @@ function publishDeviceUpdate(device, topic, type) {
         case 'climatesensor':
             if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
                 propertyMapping = {
+                    'BATLVL': 'battery',
                     'CLIHCS': 'operating_mode',
                     'CLISPH': 'heat_set_point',
                     'CLISPC': 'cool_set_point',
@@ -96,7 +97,19 @@ function publishDeviceUpdate(device, topic, type) {
             break
 
         case 'motion':
+            if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+                propertyMapping = {
+                    'BATLVL': 'battery',
+                }
+                Object.keys(propertyMapping).forEach(property => {
+                    if (property != updatedProperty) {
+                        delete propertyMapping[property]
+                    }
+                });
+
+            } else {}
             value = device.getCurrentMotionSensorState()
+
             break
 
         case 'sensor':
@@ -110,6 +123,7 @@ function publishDeviceUpdate(device, topic, type) {
         case 'lock':
             if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
                 propertyMapping = {
+                    'BATLVL': 'battery',
                     'USRNUM': 'user_accessed',
                     'ALARM': 'alarm',
                     'ST': 'status',
