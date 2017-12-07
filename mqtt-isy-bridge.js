@@ -37,7 +37,7 @@ function variableChangeCallback(isy, variable) {
         health.healthyEvent()
 }
 
-function publishDeviceUpdate(device, topic, type) {
+function publishDeviceUpdate(device, topic, type, isKnownDevice) {
     const updatedProperty = device.updatedProperty
     const updateType = device.updateType
 
@@ -191,7 +191,8 @@ function publishDeviceUpdate(device, topic, type) {
         const topic = topicsToPublish[index];
         const value = valuesToPublish[index];
 
-        client.publish(topic, value)
+        var options = { retain: isKnownDevice }
+        client.publish(topic, value, options)
     }
     if (client.connected)
         health.healthyEvent()
@@ -203,14 +204,16 @@ function deviceChangeCallback(isy, device) {
 
     var topic = topicForId(address)
     var type = typeForId(address)
+    var isKnownDevice = true
 
     if (_.isNil(topic)) {
         topic = topic_prefix + device.address
         type = 'switch'
+        isKnownDevice = false
     }
     if (!_.isNil(topic) && !_.isNil(type)) {
         logging.debug(' => found topic: ' + topic + '  type: ' + type)
-        publishDeviceUpdate(device, topic, type)
+        publishDeviceUpdate(device, topic, type, isKnownDevice)
     }
 }
 
