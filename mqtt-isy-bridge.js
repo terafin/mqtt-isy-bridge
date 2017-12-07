@@ -73,6 +73,7 @@ function publishDeviceUpdate(device, topic, type) {
                     'CLISPH': 'heat_set_point',
                     'CLISPC': 'cool_set_point',
                     'CLIHUM': 'humidity',
+                    'CLITEMP': 'temperature',
                     'CLIFS': 'fan',
                     'CLIMD': 'mode',
                 }
@@ -81,14 +82,6 @@ function publishDeviceUpdate(device, topic, type) {
                         delete propertyMapping[property]
                     }
                 });
-            } else {
-                if (!_.isNil(device.currentState)) {
-                    var temperature = Math.round(device.currentState / 2.0)
-                    if (temperature != 0) {
-                        topicsToPublish.push(topic + '/' + 'temperature')
-                        valuesToPublish.push(temperature.toString())
-                    }
-                }
             }
             break
 
@@ -146,6 +139,14 @@ function publishDeviceUpdate(device, topic, type) {
 
     Object.keys(propertyMapping).forEach(property => {
         var propertyValue = device.getGenericProperty(property)
+
+        switch (property) {
+            case 'CLITEMP':
+                if (propertyValue > 80)
+                    return
+                break;
+        }
+
         if (!_.isNil(propertyValue)) {
             topicsToPublish.push(topic + '/' + propertyMapping[property])
             valuesToPublish.push(propertyValue.toString())
