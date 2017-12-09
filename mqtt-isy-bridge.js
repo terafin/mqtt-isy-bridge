@@ -37,7 +37,7 @@ function variableChangeCallback(isy, variable) {
         health.healthyEvent()
 }
 
-function publishDeviceUpdate(device, topic, type, isKnownDevice) {
+function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
     const updatedProperty = device.updatedProperty
     const updateType = device.updateType
 
@@ -56,7 +56,7 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice) {
 
     switch (type) {
         case 'energyusage':
-            if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+            if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
                 var amps = device.getGenericProperty('CC')
                 var volts = device.getGenericProperty('CV')
                 if (!_.isNil(amps) && !_.isNil(volts)) {
@@ -66,7 +66,7 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice) {
             break
 
         case 'climatesensor':
-            if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+            if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
                 propertyMapping = {
                     'BATLVL': 'battery',
                     'CLIHCS': 'operating_mode',
@@ -77,11 +77,13 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice) {
                     'CLIFS': 'fan',
                     'CLIMD': 'mode',
                 }
-                Object.keys(propertyMapping).forEach(property => {
-                    if (property != updatedProperty) {
-                        delete propertyMapping[property]
-                    }
-                });
+                if (!publishAll) {
+                    Object.keys(propertyMapping).forEach(property => {
+                        if (property != updatedProperty) {
+                            delete propertyMapping[property]
+                        }
+                    });
+                }
             }
             break
 
@@ -90,15 +92,17 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice) {
             break
 
         case 'motion':
-            if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+            if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
                 propertyMapping = {
                     'BATLVL': 'battery',
                 }
-                Object.keys(propertyMapping).forEach(property => {
-                    if (property != updatedProperty) {
-                        delete propertyMapping[property]
-                    }
-                });
+                if (!publishAll) {
+                    Object.keys(propertyMapping).forEach(property => {
+                        if (property != updatedProperty) {
+                            delete propertyMapping[property]
+                        }
+                    });
+                }
 
             } else {}
             value = device.getCurrentMotionSensorState()
@@ -114,18 +118,20 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice) {
             break
 
         case 'lock':
-            if (updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+            if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
                 propertyMapping = {
                     'BATLVL': 'battery',
                     'USRNUM': 'user_accessed',
                     'ALARM': 'alarm',
                     'ST': 'status',
                 }
-                Object.keys(propertyMapping).forEach(property => {
-                    if (property != updatedProperty) {
-                        delete propertyMapping[property]
-                    }
-                });
+                if (!publishAll) {
+                    Object.keys(propertyMapping).forEach(property => {
+                        if (property != updatedProperty) {
+                            delete propertyMapping[property]
+                        }
+                    });
+                }
 
             } else {
                 value = device.getCurrentLockState()
@@ -198,7 +204,7 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice) {
         health.healthyEvent()
 }
 
-function deviceChangeCallback(isy, device) {
+function _deviceChangeCallback(isy, device, publishAll) {
     logging.debug('device changed: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType)
     const address = device.address
 
@@ -213,8 +219,12 @@ function deviceChangeCallback(isy, device) {
     }
     if (!_.isNil(topic) && !_.isNil(type)) {
         logging.debug(' => found topic: ' + topic + '  type: ' + type)
-        publishDeviceUpdate(device, topic, type, isKnownDevice)
+        publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll)
     }
+}
+
+function deviceChangeCallback(isy, device) {
+    _deviceChangeCallback(isy, device, false)
 }
 
 function handleISYInitialized() {
@@ -227,7 +237,9 @@ function handleISYInitialized() {
         logging.debug('  address: ' + device.address)
         logging.debug('  connectionType: ' + device.connectionType)
         logging.debug('  batteryOperated: ' + device.batteryOperated)
+        _deviceChangeCallback(isy, device, true)
     }, this)
+
     if (client.connected)
         health.healthyEvent()
 }
