@@ -117,10 +117,10 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
         case 'switch':
             const children = device.childDevices
             if (!_.isNil(children)) {
-                value = true
+                value = false
                 for (var i = 0; i < children.length; i++) {
                     var device = children[i];
-                    value = value && device.getCurrentLightState()
+                    value = value || device.getCurrentLightState()
                 }
             } else {
                 value = device.getCurrentLightState()
