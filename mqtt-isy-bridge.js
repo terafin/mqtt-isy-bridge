@@ -38,6 +38,7 @@ function variableChangeCallback(isy, variable) {
 }
 
 function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
+    if (topic.includes('/isy') && topic.includes(':')) return
     const updatedProperty = device.updatedProperty
     const updateType = device.updateType
 
@@ -114,7 +115,16 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
             break
 
         case 'switch':
-            value = device.getCurrentLightState()
+            const children = device.childDevices
+            if (!_.isNil(children)) {
+                value = true
+                for (var i = 0; i < children.length; i++) {
+                    var device = children[i];
+                    value = value && device.getCurrentLightState()
+                }
+            } else {
+                value = device.getCurrentLightState()
+            }
             break
 
         case 'lock':
@@ -162,27 +172,27 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
     if (!_.isNil(value)) {
         switch (value) {
             case true:
-                logging.debug(' boolean true')
+                logging.info(' boolean true')
                 value = '1'
                 break
 
             case false:
-                logging.debug(' boolean false')
+                logging.info(' boolean false')
                 value = '0'
                 break
 
             case 'true':
-                logging.debug(' text true')
+                logging.info(' text true')
                 value = '1'
                 break
 
             case 'false':
-                logging.debug(' text false')
+                logging.info(' text false')
                 value = '0'
                 break
 
             default:
-                logging.debug(' raw value: + ' + value)
+                logging.info(' raw value: + ' + value)
                 value = '' + value
                 break
         }
