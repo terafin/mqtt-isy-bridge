@@ -172,27 +172,27 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
     if (!_.isNil(value)) {
         switch (value) {
             case true:
-                logging.info(' boolean true')
+                logging.debug(' boolean true')
                 value = '1'
                 break
 
             case false:
-                logging.info(' boolean false')
+                logging.debug(' boolean false')
                 value = '0'
                 break
 
             case 'true':
-                logging.info(' text true')
+                logging.debug(' text true')
                 value = '1'
                 break
 
             case 'false':
-                logging.info(' text false')
+                logging.debug(' text false')
                 value = '0'
                 break
 
             default:
-                logging.info(' raw value: + ' + value)
+                logging.debug(' raw value: + ' + value)
                 value = '' + value
                 break
         }
