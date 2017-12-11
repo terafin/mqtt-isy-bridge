@@ -278,7 +278,7 @@ client.on('connect', () => {
 })
 
 client.on('disconnect', () => {
-    logging.info('Reconnecting...')
+    logging.error('Reconnecting...')
     client.connect(host)
     health.unhealthyEvent()
 })
@@ -327,7 +327,7 @@ function _publishToISY(device, value, type) {
 }
 
 function publishToISY(deviceID, value, type) {
-    logging.info('publish to ISY', {
+    logging.debug('publish to ISY', {
         action: 'set-value',
         refID: deviceID,
         value: value
