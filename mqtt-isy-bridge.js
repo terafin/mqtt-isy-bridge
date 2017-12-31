@@ -105,7 +105,8 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
                     });
                 }
 
-            } else {}
+            }
+            
             value = device.getCurrentMotionSensorState()
 
             break
