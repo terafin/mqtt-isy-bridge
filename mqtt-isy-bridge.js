@@ -18,7 +18,6 @@ const scenesInDeviceList = true
 const enableDebugLog = true
 var topic_prefix = process.env.TOPIC_PREFIX
 
-
 const ISY = require('isy-js')
 
 if (_.isNil(host)) {
