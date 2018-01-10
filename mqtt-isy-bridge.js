@@ -231,6 +231,7 @@ function _deviceChangeCallback(isy, device, publishAll) {
     if (!_.isNil(topic) && !_.isNil(type)) {
         logging.debug(' => found topic: ' + topic + '  type: ' + type)
         publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll)
+        health.healthyEvent()
     }
 }
 
@@ -382,13 +383,6 @@ function handleDeviceAction(type, device, value) {
             publishToISY(device, value, 'switch')
             break
     }
-}
-
-const healthCheckPort = process.env.HEALTH_CHECK_PORT
-const healthCheckTime = process.env.HEALTH_CHECK_TIME
-const healthCheckURL = process.env.HEALTH_CHECK_URL
-if (!_.isNil(healthCheckPort) && !_.isNil(healthCheckTime) && !_.isNil(healthCheckURL)) {
-    health.startHealthChecks(healthCheckURL, healthCheckPort, healthCheckTime)
 }
 
 var devicesConfig = []
