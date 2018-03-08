@@ -74,6 +74,7 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
                     'CLISPC': 'cool_set_point',
                     'CLIHUM': 'humidity',
                     'CLITEMP': 'temperature',
+                    'ST': 'temperature',
                     'CLIFS': 'fan',
                     'CLIMD': 'mode',
                 }
@@ -84,6 +85,7 @@ function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
                         }
                     });
                 }
+                value = device.getFormattedStatus().currTemp
             }
             break
 
@@ -219,12 +221,14 @@ function _deviceChangeCallback(isy, device, publishAll) {
     const address = device.address
 
     var topic = topicForId(address)
-    var type = typeForId(address)
+    var type = typeForId(device, address)
     var isKnownDevice = true
 
     if (_.isNil(topic)) {
         topic = topic_prefix + device.address
-        type = 'switch'
+        if (_.isNil(type)) {
+            type = 'switch'
+        }
         isKnownDevice = false
     }
     if (!_.isNil(topic) && !_.isNil(type)) {
@@ -304,7 +308,7 @@ client.on('message', (topic, message) => {
 
     if (!_.isNil(refID)) {
         if (_.isNil(type))
-            type = typeForId(refID)
+            type = typeForId(null, refID)
 
         handleDeviceAction(type, refID, message)
     }
@@ -421,8 +425,19 @@ function topicForId(id) {
     return indexToTopicMap[id]
 }
 
-function typeForId(id) {
-    return indexToTypeMap[id]
+function typeForId(device, id) {
+    var result = indexToTypeMap[id]
+
+    if ( _.isNil(result) ) {
+        
+        switch(device.deviceType) {
+            case 'Thermostat':
+                result = 'climatesensor'
+                break;
+        }
+    }
+
+    return result
 }
 
 function idForTopic(topic) {
