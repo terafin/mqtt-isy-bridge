@@ -6,6 +6,8 @@ const logging = require('homeautomation-js-lib/logging.js')
 const config = require('homeautomation-js-lib/config_loading.js')
 const health = require('homeautomation-js-lib/health.js')
 
+require('homeautomation-js-lib/mqtt_helpers.js')
+
 // Config
 const config_path = process.env.CONFIG_PATH
 const isyIP = process.env.ISY_IP
