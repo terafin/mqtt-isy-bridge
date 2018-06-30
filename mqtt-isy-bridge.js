@@ -267,7 +267,20 @@ var isy = new ISY.ISY(isyIP, isyUsername, isyPassword, elkEnabled, deviceChangeC
 isy.initialize(handleISYInitialized)
 
 // Setup MQTT
-const client = mqtt.connect(host)
+
+var connectedEvent = function() {
+    logging.info('MQTT Connected')
+    client.subscribe('#')
+    health.healthyEvent()
+}
+
+var disconnectedEvent = function() {
+    logging.error('Reconnecting...')
+    health.unhealthyEvent()
+}
+
+// Setup MQTT
+var client = mqtt.setupClient(connectedEvent, disconnectedEvent)
 
 if (_.isNil(client)) {
     logging.warn('MQTT Client Failed to Startup')
@@ -275,18 +288,6 @@ if (_.isNil(client)) {
 }
 
 // MQTT Observation
-
-client.on('connect', () => {
-    logging.info('MQTT Connected')
-    client.subscribe('#')
-    health.healthyEvent()
-})
-
-client.on('disconnect', () => {
-    logging.error('Reconnecting...')
-    client.connect(host)
-    health.unhealthyEvent()
-})
 
 client.on('message', (topic, message) => {
     var components = topic.split('/')
