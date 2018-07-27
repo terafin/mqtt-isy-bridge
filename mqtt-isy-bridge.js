@@ -7,6 +7,7 @@ const config = require('homeautomation-js-lib/config_loading.js')
 const health = require('homeautomation-js-lib/health.js')
 
 require('homeautomation-js-lib/mqtt_helpers.js')
+const repeat = require('repeat')
 
 // Config
 const config_path = process.env.CONFIG_PATH
@@ -244,6 +245,22 @@ function deviceChangeCallback(isy, device) {
     _deviceChangeCallback(isy, device, false)
 }
 
+// health.healthyEvent()
+
+function healthCheck() {
+    if ( _.isNil(isy) ) return
+    if (!client.connected) return
+
+    isy.getDeviceList().forEach(function(device) {
+        health.healthyEvent()
+    }, this)
+}
+
+function startMonitoring() {
+    logging.info('Starting to ping ISY')
+    repeat(healthCheck).every(30, 's').start.in(1, 'sec')
+}
+
 function handleISYInitialized() {
     logging.debug('handleISYInitialized')
 
@@ -259,6 +276,8 @@ function handleISYInitialized() {
 
     if (client.connected)
         health.healthyEvent()
+
+    startMonitoring()
 }
 
 // Set up modules
@@ -321,15 +340,15 @@ function _publishToISY(device, value, type) {
     if (type === 'lock') {
         console.log('Sending lock command')
         device.sendLockCommand(value, function(result) {
-            logging.error('value set: ' + value + '   result: ' + result)
+            logging.info('value set: ' + value + '   result: ' + result)
         })
     } else {
         // Double publishing, something is wrong with my Insteon network - I think noise
         device.sendLightCommand(value, function(result) {
-            logging.error('value set: ' + value + '   result: ' + result)
+            logging.info('value set: ' + value + '   result: ' + result)
         })
         device.sendLightCommand(value, function(result) {
-            logging.error('value set: ' + value + '   result: ' + result)
+            logging.info('value set: ' + value + '   result: ' + result)
         })
     }
 }
