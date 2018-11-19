@@ -24,260 +24,269 @@ var topic_prefix = process.env.TOPIC_PREFIX
 const ISY = require('isy-js')
 
 if (_.isNil(host)) {
-    logging.warn('empty mqtt host, not starting')
-    process.abort()
+	logging.warn('empty mqtt host, not starting')
+	process.abort()
 }
 
 if (_.isNil(topic_prefix)) {
-    logging.warn('empty topic prefix, using /isy')
-    topic_prefix = '/isy/'
+	logging.warn('empty topic prefix, using /isy')
+	topic_prefix = '/isy/'
 }
 
-function variableChangeCallback(isy, variable) {
-    logging.debug('variable changed: ' + variable)
-    if (client.connected)
-        health.healthyEvent()
+const variableChangeCallback = function(isy, variable) {
+	logging.debug('variable changed: ' + variable)
+	if (client.connected) {
+		health.healthyEvent()
+	}
 }
 
-function publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll) {
-    if (topic.includes('/isy') && topic.includes(':')) return
-    const updatedProperty = device.updatedProperty
-    const updateType = device.updateType
+const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publishAll) {
+	if (topic.includes('/isy') && topic.includes(':')) { 
+		return 
+	}
+	const updatedProperty = device.updatedProperty
+	const updateType = device.updateType
 
-    logging.info({
-            deviceProperty: updatedProperty,
-            updateType: updateType,
-            connectionType: device.connectionType,
-            topic: topic
-        },
-        'publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
+	logging.info({
+		deviceProperty: updatedProperty,
+		updateType: updateType,
+		connectionType: device.connectionType,
+		topic: topic
+	},
+	'publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
 
-    var value = null
-    var topicsToPublish = []
-    var valuesToPublish = []
-    var propertyMapping = {}
+	var value = null
+	var topicsToPublish = []
+	var valuesToPublish = []
+	var propertyMapping = {}
 
-    switch (type) {
-        case 'energyusage':
-            if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
-                var amps = device.getGenericProperty('CC')
-                var volts = device.getGenericProperty('CV')
-                if (!_.isNil(amps) && !_.isNil(volts)) {
-                    value = ((volts * amps) / 10000).toFixed(2)
-                }
-            }
-            break
+	switch (type) {
+		case 'energyusage':
+			if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+				var amps = device.getGenericProperty('CC')
+				var volts = device.getGenericProperty('CV')
+				if (!_.isNil(amps) && !_.isNil(volts)) {
+					value = ((volts * amps) / 10000).toFixed(2)
+				}
+			}
+			break
 
-        case 'climatesensor':
-            if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
-                propertyMapping = {
-                    'BATLVL': 'battery',
-                    'CLIHCS': 'operating_mode',
-                    'CLISPH': 'heat_set_point',
-                    'CLISPC': 'cool_set_point',
-                    'CLIHUM': 'humidity',
-                    'CLITEMP': 'temperature',
-                    'ST': 'temperature',
-                    'CLIFS': 'fan',
-                    'CLIMD': 'mode',
-                }
-                if (!publishAll) {
-                    Object.keys(propertyMapping).forEach(property => {
-                        if (property != updatedProperty) {
-                            delete propertyMapping[property]
-                        }
-                    });
-                }
-                value = device.getFormattedStatus().currTemp
-            }
-            break
+		case 'climatesensor':
+			if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+				propertyMapping = {
+					'BATLVL': 'battery',
+					'CLIHCS': 'operating_mode',
+					'CLISPH': 'heat_set_point',
+					'CLISPC': 'cool_set_point',
+					'CLIHUM': 'humidity',
+					'CLITEMP': 'temperature',
+					'ST': 'temperature',
+					'CLIFS': 'fan',
+					'CLIMD': 'mode',
+				}
+				if (!publishAll) {
+					Object.keys(propertyMapping).forEach(property => {
+						if (property != updatedProperty) {
+							delete propertyMapping[property]
+						}
+					})
+				}
+				value = device.getFormattedStatus().currTemp
+			}
+			break
 
-        case 'climate':
-            value = device.getFormattedStatus()
-            break
+		case 'climate':
+			value = device.getFormattedStatus()
+			break
 
-        case 'motion':
-            if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
-                propertyMapping = {
-                    'BATLVL': 'battery',
-                }
-                if (!publishAll) {
-                    Object.keys(propertyMapping).forEach(property => {
-                        if (property != updatedProperty) {
-                            delete propertyMapping[property]
-                        }
-                    });
-                }
+		case 'motion':
+			if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+				propertyMapping = {
+					'BATLVL': 'battery',
+				}
+				if (!publishAll) {
+					Object.keys(propertyMapping).forEach(property => {
+						if (property != updatedProperty) {
+							delete propertyMapping[property]
+						}
+					})
+				}
 
-            }
+			}
             
-            value = device.getCurrentMotionSensorState()
+			value = device.getCurrentMotionSensorState()
 
-            break
+			break
 
-        case 'sensor':
-            value = device.getCurrentLightState()
-            break
+		case 'sensor':
+			value = device.getCurrentLightState()
+			break
 
-        case 'switch':
-            const children = device.childDevices
-            if (!_.isNil(children)) {
-                value = false
-                for (var i = 0; i < children.length; i++) {
-                    var device = children[i];
-                    value = value || device.getCurrentLightState()
-                }
-            } else {
-                value = device.getCurrentLightState()
-            }
-            break
+		case 'switch':
+			if (!_.isNil(device.childDevices)) {
+				value = false
+				for (var i = 0; i < device.childDevices.length; i++) {
+					var childDevice = device.childDevices[i]
+					value = value || childDevice.getCurrentLightState()
+				}
+			} else {
+				value = device.getCurrentLightState()
+			}
+			break
 
-        case 'lock':
-            if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
-                propertyMapping = {
-                    'BATLVL': 'battery',
-                    'USRNUM': 'user_accessed',
-                    'ALARM': 'alarm',
-                    'ST': 'status',
-                }
-                if (!publishAll) {
-                    Object.keys(propertyMapping).forEach(property => {
-                        if (property != updatedProperty) {
-                            delete propertyMapping[property]
-                        }
-                    });
-                }
+		case 'lock':
+			if (publishAll || updateType === ISY.DEVICE_UPDATE_TYPE_PROPERTY) {
+				propertyMapping = {
+					'BATLVL': 'battery',
+					'USRNUM': 'user_accessed',
+					'ALARM': 'alarm',
+					'ST': 'status',
+				}
+				if (!publishAll) {
+					Object.keys(propertyMapping).forEach(property => {
+						if (property != updatedProperty) {
+							delete propertyMapping[property]
+						}
+					})
+				}
 
-            } else {
-                value = device.getCurrentLockState()
+			} else {
+				value = device.getCurrentLockState()
 
-            }
-            break
+			}
+			break
 
-        default:
-            break
-    }
+		default:
+			break
+	}
 
-    Object.keys(propertyMapping).forEach(property => {
-        var propertyValue = device.getGenericProperty(property)
+	Object.keys(propertyMapping).forEach(property => {
+		var propertyValue = device.getGenericProperty(property)
 
-        switch (property) {
-            case 'CLITEMP':
-                if (propertyValue > 80)
-                    return
-                break;
-        }
+		switch (property) {
+			case 'CLITEMP':
+				if (propertyValue > 80) {
+					return 
+				}
+				break
+		}
 
-        if (!_.isNil(propertyValue)) {
-            topicsToPublish.push(topic + '/' + propertyMapping[property])
-            valuesToPublish.push(propertyValue.toString())
-        }
-    });
+		if (!_.isNil(propertyValue)) {
+			topicsToPublish.push(topic + '/' + propertyMapping[property])
+			valuesToPublish.push(propertyValue.toString())
+		}
+	})
 
-    if (!_.isNil(value)) {
-        switch (value) {
-            case true:
-                logging.debug(' boolean true')
-                value = '1'
-                break
+	if (!_.isNil(value)) {
+		switch (value) {
+			case true:
+				logging.debug(' boolean true')
+				value = '1'
+				break
 
-            case false:
-                logging.debug(' boolean false')
-                value = '0'
-                break
+			case false:
+				logging.debug(' boolean false')
+				value = '0'
+				break
 
-            case 'true':
-                logging.debug(' text true')
-                value = '1'
-                break
+			case 'true':
+				logging.debug(' text true')
+				value = '1'
+				break
 
-            case 'false':
-                logging.debug(' text false')
-                value = '0'
-                break
+			case 'false':
+				logging.debug(' text false')
+				value = '0'
+				break
 
-            default:
-                logging.debug(' raw value: + ' + value)
-                value = '' + value
-                break
-        }
-        topicsToPublish.push(topic)
-        valuesToPublish.push(value)
+			default:
+				logging.debug(' raw value: + ' + value)
+				value = '' + value
+				break
+		}
+		topicsToPublish.push(topic)
+		valuesToPublish.push(value)
 
-    } else {
-        logging.debug('No value found')
-    }
+	} else {
+		logging.debug('No value found')
+	}
 
-    for (let index = 0; index < topicsToPublish.length; index++) {
-        const topic = topicsToPublish[index];
-        const value = valuesToPublish[index];
+	for (let index = 0; index < topicsToPublish.length; index++) {
+		const topic = topicsToPublish[index]
+		const value = valuesToPublish[index]
 
-        var options = { retain: isKnownDevice }
-        client.publish(topic, value, options)
-    }
-    if (client.connected)
-        health.healthyEvent()
+		var options = {retain: isKnownDevice, qos: 2}
+		client.publish(topic, value, options)
+	}
+	if (client.connected) {
+		health.healthyEvent() 
+	}
 }
 
-function _deviceChangeCallback(isy, device, publishAll) {
-    logging.debug('device changed: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType)
-    const address = device.address
+const _deviceChangeCallback = function(isy, device, publishAll) {
+	logging.debug('device changed: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType)
+	const address = device.address
 
-    var topic = topicForId(address)
-    var type = typeForId(device, address)
-    var isKnownDevice = true
+	var topic = topicForId(address)
+	var type = typeForId(device, address)
+	var isKnownDevice = true
 
-    if (_.isNil(topic)) {
-        topic = topic_prefix + device.address
-        if (_.isNil(type)) {
-            type = 'switch'
-        }
-        isKnownDevice = false
-    }
-    if (!_.isNil(topic) && !_.isNil(type)) {
-        logging.debug(' => found topic: ' + topic + '  type: ' + type)
-        publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll)
-        health.healthyEvent()
-    }
+	if (_.isNil(topic)) {
+		topic = topic_prefix + device.address
+		if (_.isNil(type)) {
+			type = 'switch'
+		}
+		isKnownDevice = false
+	}
+	if (!_.isNil(topic) && !_.isNil(type)) {
+		logging.debug(' => found topic: ' + topic + '  type: ' + type)
+		publishDeviceUpdate(device, topic, type, isKnownDevice, publishAll)
+		health.healthyEvent()
+	}
 }
 
-function deviceChangeCallback(isy, device) {
-    _deviceChangeCallback(isy, device, false)
+const deviceChangeCallback = function(isy, device) {
+	_deviceChangeCallback(isy, device, false)
 }
 
 // health.healthyEvent()
 
-function healthCheck() {
-    if ( _.isNil(isy) ) return
-    if (!client.connected) return
+const healthCheck= function() {
+	if ( _.isNil(isy) ) { 
+		return
+	}
+	if (!client.connected) {
+		return
+	}
 
-    isy.getDeviceList().forEach(function(device) {
-        health.healthyEvent()
-    }, this)
+	isy.getDeviceList().forEach(function(device) {
+		health.healthyEvent()
+	}, this)
 }
 
-function startMonitoring() {
-    logging.info('Starting to ping ISY')
-    repeat(healthCheck).every(30, 's').start.in(1, 'sec')
+const startMonitoring = function() {
+	logging.info('Starting to ping ISY')
+	repeat(healthCheck).every(30, 's').start.in(1, 'sec')
 }
 
-function handleISYInitialized() {
-    logging.debug('handleISYInitialized')
+const handleISYInitialized = function() {
+	logging.debug('handleISYInitialized')
 
-    isy.getDeviceList().forEach(function(device) {
-        logging.debug('  name: ' + device.name)
-        logging.debug('  type: ' + device.isyType)
-        logging.debug('  deviceType: ' + device.deviceType)
-        logging.debug('  address: ' + device.address)
-        logging.debug('  connectionType: ' + device.connectionType)
-        logging.debug('  batteryOperated: ' + device.batteryOperated)
-        _deviceChangeCallback(isy, device, true)
-    }, this)
+	isy.getDeviceList().forEach(function(device) {
+		logging.debug('  name: ' + device.name)
+		logging.debug('  type: ' + device.isyType)
+		logging.debug('  deviceType: ' + device.deviceType)
+		logging.debug('  address: ' + device.address)
+		logging.debug('  connectionType: ' + device.connectionType)
+		logging.debug('  batteryOperated: ' + device.batteryOperated)
+		_deviceChangeCallback(isy, device, true)
+	}, this)
 
-    if (client.connected)
-        health.healthyEvent()
+	if (client.connected) { 
+		health.healthyEvent() 
+	}
 
-    startMonitoring()
+	startMonitoring()
 }
 
 // Set up modules
@@ -290,124 +299,127 @@ isy.initialize(handleISYInitialized)
 // Setup MQTT
 
 var connectedEvent = function() {
-    logging.info('MQTT Connected')
-    client.subscribe('#')
-    health.healthyEvent()
+	logging.info('MQTT Connected')
+	client.subscribe('#', {qos: 2})
+	health.healthyEvent()
 }
 
 var disconnectedEvent = function() {
-    logging.error('Reconnecting...')
-    health.unhealthyEvent()
+	logging.error('Reconnecting...')
+	health.unhealthyEvent()
 }
 
 // Setup MQTT
 var client = mqtt.setupClient(connectedEvent, disconnectedEvent)
 
 if (_.isNil(client)) {
-    logging.warn('MQTT Client Failed to Startup')
-    process.abort()
+	logging.warn('MQTT Client Failed to Startup')
+	process.abort()
 }
 
 // MQTT Observation
 
 client.on('message', (topic, message) => {
-    var components = topic.split('/')
-    var refID = null
-    var type = null
-    if (topic.endsWith('/set')) {
-        const modifiedDevice = _.first(topic.split('/set'))
-        refID = idForTopic(modifiedDevice)
+	var components = topic.split('/')
+	var refID = null
+	var type = null
+	if (topic.endsWith('/set')) {
+		const modifiedDevice = _.first(topic.split('/set'))
+		refID = idForTopic(modifiedDevice)
 
-        logging.debug('topic: ' + topic + '   mapped: ' + refID)
+		logging.debug('topic: ' + topic + '   mapped: ' + refID)
 
-    } else if (topic.startsWith('/isy/action/')) {
-        logging.debug(topic + ':' + message)
-        refID = _.last(components)
-        type = 'switch'
-    } else {
-        return
-    }
+	} else if (topic.startsWith('/isy/action/')) {
+		logging.debug(topic + ':' + message)
+		refID = _.last(components)
+		type = 'switch'
+	} else {
+		return
+	}
 
-    if (!_.isNil(refID)) {
-        if (_.isNil(type))
-            type = typeForId(null, refID)
+	if (!_.isNil(refID)) {
+		if (_.isNil(type)) { 
+			type = typeForId(null, refID) 
+		}
 
-        handleDeviceAction(type, refID, message)
-    }
+		handleDeviceAction(type, refID, message)
+	}
 })
 
-function _publishToISY(device, value, type) {
-    if (type === 'lock') {
-        console.log('Sending lock command')
-        device.sendLockCommand(value, function(result) {
-            logging.info('value set: ' + value + '   result: ' + result)
-        })
-    } else {
-        // Double publishing, something is wrong with my Insteon network - I think noise
-        device.sendLightCommand(value, function(result) {
-            logging.info('value set: ' + value + '   result: ' + result)
-        })
-        device.sendLightCommand(value, function(result) {
-            logging.info('value set: ' + value + '   result: ' + result)
-        })
-    }
+const _publishToISY = function(device, value, type) {
+	if (type === 'lock') {
+		console.log('Sending lock command')
+		device.sendLockCommand(value, function(result) {
+			logging.info('value set: ' + value + '   result: ' + result)
+		})
+	} else {
+		// Double publishing, something is wrong with my Insteon network - I think noise
+		device.sendLightCommand(value, function(result) {
+			logging.info('value set: ' + value + '   result: ' + result)
+		})
+		device.sendLightCommand(value, function(result) {
+			logging.info('value set: ' + value + '   result: ' + result)
+		})
+	}
 }
 
-function publishToISY(deviceID, value, type) {
-    logging.debug('publish to ISY', {
-        action: 'set-value',
-        refID: deviceID,
-        value: value
-    })
-    const device = isy.getDevice(deviceID)
+const publishToISY = function(deviceID, value, type) {
+	logging.debug('publish to ISY', {
+		action: 'set-value',
+		refID: deviceID,
+		value: value
+	})
+	const device = isy.getDevice(deviceID)
 
-    if (_.isNil(device)) {
-        logging.error('could not resolve device: ' + deviceID)
-    } else {
-        _publishToISY(device, value, type)
-    }
+	if (_.isNil(device)) {
+		logging.error('could not resolve device: ' + deviceID)
+	} else {
+		_publishToISY(device, value, type)
+	}
 
 }
 
-function handleSwitchAction(device, value) {
-    var numberValue = _.toNumber(value)
+const handleSwitchAction = function(device, value) {
+	var numberValue = _.toNumber(value)
 
-    if (numberValue > 0)
-        numberValue = 255
-    else if (numberValue < 0)
-        numberValue = 0
+	if (numberValue > 0) {
+		numberValue = 255
+	} else if (numberValue < 0) {
+		numberValue = 0 
+	}
 
-    publishToISY(device, numberValue, 'switch')
+	publishToISY(device, numberValue, 'switch')
 }
 
-function handleLockAction(device, value) {
-    var numberValue = _.toNumber(value)
+const handleLockAction = function(device, value) {
+	var numberValue = _.toNumber(value)
 
-    if (numberValue > 0)
-        numberValue = 255
-    else if (numberValue < 0)
-        numberValue = 0
+	if (numberValue > 0) { 
+		numberValue = 255 
+	} else if (numberValue < 0) {
+		numberValue = 0
+	}
 
-    publishToISY(device, numberValue, 'lock')
+	publishToISY(device, numberValue, 'lock')
 }
 
-function handleDeviceAction(type, device, value) {
-    switch (type) {
-        case 'switch':
-            handleSwitchAction(device, value)
-            break
+const handleDeviceAction = function(type, device, value) {
+	switch (type) {
+		case 'switch':
+			handleSwitchAction(device, value)
+			break
 
-        case 'lock':
-            handleLockAction(device, value)
-            break
+		case 'lock':
+			handleLockAction(device, value)
+			break
 
-        case 'sensor':
-            break
+		case 'sensor':
+			break
 
-        default:
-            publishToISY(device, value, 'switch')
-            break
-    }
+		default:
+			publishToISY(device, value, 'switch')
+			break
+	}
 }
 
 var devicesConfig = []
@@ -416,52 +428,52 @@ var indexToTopicMap = {}
 var topicToIndexMap = {}
 
 config.on('config-loaded', () => {
-    logging.debug('  ISY config loaded')
-    devicesConfig = []
-    indexToTypeMap = {}
-    indexToTopicMap = {}
-    topicToIndexMap = {}
+	logging.debug('  ISY config loaded')
+	devicesConfig = []
+	indexToTypeMap = {}
+	indexToTopicMap = {}
+	topicToIndexMap = {}
 
-    config.deviceIterator(function(deviceName, deviceConfig) {
-        var deviceInfo = {
-            device: deviceName,
-            name: deviceConfig.name,
-            id: deviceConfig.id,
-            type: deviceConfig.type,
-            topic: deviceConfig.topic
-        }
+	config.deviceIterator(function(deviceName, deviceConfig) {
+		var deviceInfo = {
+			device: deviceName,
+			name: deviceConfig.name,
+			id: deviceConfig.id,
+			type: deviceConfig.type,
+			topic: deviceConfig.topic
+		}
 
-        logging.debug('  found device info', deviceInfo)
+		logging.debug('  found device info', deviceInfo)
 
-        devicesConfig.push(deviceInfo)
+		devicesConfig.push(deviceInfo)
 
-        indexToTopicMap[deviceInfo.id] = deviceInfo.topic
-        topicToIndexMap[deviceInfo.topic] = deviceInfo.id
-        indexToTypeMap[deviceInfo.id] = deviceInfo.type
+		indexToTopicMap[deviceInfo.id] = deviceInfo.topic
+		topicToIndexMap[deviceInfo.topic] = deviceInfo.id
+		indexToTypeMap[deviceInfo.id] = deviceInfo.type
 
-    })
+	})
 })
 
 
-function topicForId(id) {
-    return indexToTopicMap[id]
+const topicForId = function(id) {
+	return indexToTopicMap[id]
 }
 
-function typeForId(device, id) {
-    var result = indexToTypeMap[id]
+const typeForId = function(device, id) {
+	var result = indexToTypeMap[id]
 
-    if ( _.isNil(result) ) {
+	if ( _.isNil(result) ) {
         
-        switch(device.deviceType) {
-            case 'Thermostat':
-                result = 'climatesensor'
-                break;
-        }
-    }
+		switch(device.deviceType) {
+			case 'Thermostat':
+				result = 'climatesensor'
+				break
+		}
+	}
 
-    return result
+	return result
 }
 
-function idForTopic(topic) {
-    return topicToIndexMap[topic]
+const idForTopic = function(topic) {
+	return topicToIndexMap[topic]
 }
