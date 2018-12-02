@@ -210,7 +210,7 @@ const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publish
 		const value = valuesToPublish[index]
 
 		var options = {retain: isKnownDevice, qos: 2}
-		client.publish(topic, value, options)
+		client.smartPublish(topic, value, options)
 	}
 	if (client.connected) {
 		health.healthyEvent() 
