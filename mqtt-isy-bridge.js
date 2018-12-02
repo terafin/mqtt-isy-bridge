@@ -47,13 +47,7 @@ const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publish
 	const updatedProperty = device.updatedProperty
 	const updateType = device.updateType
 
-	logging.info({
-		deviceProperty: updatedProperty,
-		updateType: updateType,
-		connectionType: device.connectionType,
-		topic: topic
-	},
-	'publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
+	logging.info('publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
 
 	var value = null
 	var topicsToPublish = []
