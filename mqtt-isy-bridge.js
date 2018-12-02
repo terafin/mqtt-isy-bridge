@@ -353,10 +353,6 @@ const _publishToISY = function(device, value, type) {
 			logging.info('value set: ' + value + '   result: ' + result)
 		})
 	} else {
-		// Double publishing, something is wrong with my Insteon network - I think noise
-		device.sendLightCommand(value, function(result) {
-			logging.info('value set: ' + value + '   result: ' + result)
-		})
 		device.sendLightCommand(value, function(result) {
 			logging.info('value set: ' + value + '   result: ' + result)
 		})
