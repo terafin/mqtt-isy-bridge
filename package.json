@@ -14,7 +14,7 @@
         "homeautomation-js-lib": "git://github.com/terafin/homeautomation-js-lib.git",
         "isy-js": "git://github.com/terafin/isy-js.git",
         "lodash": "latest",
-        "repeat": "latest",
+        "repeat": "0.0.6",
         "mqtt": "latest"
     },
     "engines": {
