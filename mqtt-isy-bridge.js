@@ -209,7 +209,7 @@ const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publish
 		const topic = topicsToPublish[index]
 		const value = valuesToPublish[index]
 
-		var options = {retain: isKnownDevice, qos: 2}
+		var options = {retain: isKnownDevice, qos: 1}
 		client.smartPublish(topic, value, options)
 	}
 	if (client.connected) {
@@ -294,7 +294,7 @@ isy.initialize(handleISYInitialized)
 
 var connectedEvent = function() {
 	logging.info('MQTT Connected')
-	client.subscribe('#', {qos: 2})
+	client.subscribe('#', {qos: 1})
 	health.healthyEvent()
 }
 
