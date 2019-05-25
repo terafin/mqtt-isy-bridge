@@ -5,8 +5,7 @@ const _ = require('lodash')
 const logging = require('homeautomation-js-lib/logging.js')
 const config = require('homeautomation-js-lib/config_loading.js')
 const health = require('homeautomation-js-lib/health.js')
-
-require('homeautomation-js-lib/mqtt_helpers.js')
+const mqtt_helpers = require('homeautomation-js-lib/mqtt_helpers.js')
 const repeat = require('repeat')
 
 // Config
@@ -304,7 +303,7 @@ var disconnectedEvent = function() {
 }
 
 // Setup MQTT
-var client = mqtt.setupClient(connectedEvent, disconnectedEvent)
+var client = mqtt_helpers.setupClient(connectedEvent, disconnectedEvent)
 
 if (_.isNil(client)) {
 	logging.warn('MQTT Client Failed to Startup')
