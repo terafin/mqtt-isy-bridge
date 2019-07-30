@@ -32,6 +32,16 @@ if (_.isNil(topic_prefix)) {
 	topic_prefix = '/isy/'
 }
 
+const hasWhiteSpace = function(s) {
+	return s.indexOf(' ') >= 0
+}
+
+const deviceIsLikelyScene = function(device) {
+	var isnum = /^\d+$/.test(device)
+
+	return !hasWhiteSpace(device) && isnum
+}
+
 const variableChangeCallback = function(isy, variable) {
 	logging.debug('variable changed: ' + variable)
 	if (client.connected) {
@@ -40,8 +50,8 @@ const variableChangeCallback = function(isy, variable) {
 }
 
 const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publishAll) {
-	if (topic.includes('/isy') && topic.includes(':')) { 
-		return 
+	if (topic.includes('/isy') && topic.includes(':')) {
+		return
 	}
 	const updatedProperty = device.updatedProperty
 	const updateType = device.updateType
@@ -106,7 +116,7 @@ const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publish
 				}
 
 			}
-            
+
 			value = device.getCurrentMotionSensorState()
 
 			break
@@ -159,7 +169,7 @@ const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publish
 		switch (property) {
 			case 'CLITEMP':
 				if (propertyValue > 80) {
-					return 
+					return
 				}
 				break
 		}
@@ -212,7 +222,7 @@ const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publish
 		client.smartPublish(topic, value, options)
 	}
 	if (client.connected) {
-		health.healthyEvent() 
+		health.healthyEvent()
 	}
 }
 
@@ -244,8 +254,8 @@ const deviceChangeCallback = function(isy, device) {
 
 // health.healthyEvent()
 
-const healthCheck= function() {
-	if ( _.isNil(isy) ) { 
+const healthCheck = function() {
+	if (_.isNil(isy)) {
 		return
 	}
 	if (!client.connected) {
@@ -275,8 +285,8 @@ const handleISYInitialized = function() {
 		_deviceChangeCallback(isy, device, true)
 	}, this)
 
-	if (client.connected) { 
-		health.healthyEvent() 
+	if (client.connected) {
+		health.healthyEvent()
 	}
 
 	startMonitoring()
@@ -331,8 +341,8 @@ client.on('message', (topic, message) => {
 	}
 
 	if (!_.isNil(refID)) {
-		if (_.isNil(type)) { 
-			type = typeForId(null, refID) 
+		if (_.isNil(type)) {
+			type = typeForId(null, refID)
 		}
 
 		handleDeviceAction(type, refID, message)
@@ -341,18 +351,25 @@ client.on('message', (topic, message) => {
 
 const _publishToISY = function(device, value, type) {
 	if (type === 'lock') {
-		console.log('Sending lock command')
+		logging.info('Sending lock command')
 		device.sendLockCommand(value, function(result) {
-			logging.info('value set: ' + value + '   result: ' + result)
+			logging.info('device: ' + device + '   value set: ' + value + '   result: ' + result)
 		})
 	} else {
 		device.sendLightCommand(value, function(result) {
-			logging.info('value set: ' + value + '   result: ' + result)
+			logging.info('device: ' + device + '   value set: ' + value + '   result: ' + result)
 		})
-		// Double publishing, something is wrong with my Insteon network - I think noise
-		device.sendLightCommand(value, function(result) {
-			logging.info('value set: ' + value + '   result: ' + result)
-		})
+
+		if (deviceIsLikelyScene(device)) {
+			logging.info('Device is likely a scene, will retry in 5 seconds')
+			// Double publishing, as scenes do not have retry mechanims in ISY https://forum.universal-devices.com/topic/11690-understanding-retries-in-isy/
+			// https://forum.universal-devices.com/topic/11690-understanding-retries-in-isy/
+			setTimeout(function() {
+				device.sendLightCommand(value, function(result) {
+					logging.info('scene backup retry - set: ' + value + '   result: ' + result)
+				})
+			}, 5)
+		}
 	}
 }
 
@@ -378,7 +395,7 @@ const handleSwitchAction = function(device, value) {
 	if (numberValue > 0) {
 		numberValue = 255
 	} else if (numberValue < 0) {
-		numberValue = 0 
+		numberValue = 0
 	}
 
 	publishToISY(device, numberValue, 'switch')
@@ -387,8 +404,8 @@ const handleSwitchAction = function(device, value) {
 const handleLockAction = function(device, value) {
 	var numberValue = _.toNumber(value)
 
-	if (numberValue > 0) { 
-		numberValue = 255 
+	if (numberValue > 0) {
+		numberValue = 255
 	} else if (numberValue < 0) {
 		numberValue = 0
 	}
@@ -455,9 +472,9 @@ const topicForId = function(id) {
 const typeForId = function(device, id) {
 	var result = indexToTypeMap[id]
 
-	if ( _.isNil(result) ) {
-        
-		switch(device.deviceType) {
+	if (_.isNil(result)) {
+
+		switch (device.deviceType) {
 			case 'Thermostat':
 				result = 'climatesensor'
 				break
