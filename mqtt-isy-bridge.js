@@ -361,14 +361,15 @@ const _publishToISY = function(device, value, type) {
 		})
 
 		if (deviceIsLikelyScene(device)) {
-			logging.info('Device is likely a scene, will retry in 5 seconds')
+			logging.info('Device is likely a scene, will retry in 2 seconds')
 			// Double publishing, as scenes do not have retry mechanims in ISY https://forum.universal-devices.com/topic/11690-understanding-retries-in-isy/
 			// https://forum.universal-devices.com/topic/11690-understanding-retries-in-isy/
+
 			setTimeout(function() {
 				device.sendLightCommand(value, function(result) {
 					logging.info('scene backup retry - set: ' + value + '   result: ' + result)
 				})
-			}, 5)
+			}, 2)
 		}
 	}
 }
