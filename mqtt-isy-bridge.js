@@ -33,7 +33,7 @@ if (_.isNil(topic_prefix)) {
 }
 
 const hasWhiteSpace = function(s) {
-	return s.indexOf(' ') >= 0
+	return s.toString().indexOf(' ') >= 0
 }
 
 const deviceIsLikelyScene = function(device) {
