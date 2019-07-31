@@ -360,7 +360,7 @@ const _publishToISY = function(device, value, type) {
 			logging.info('device: ' + device + '   value set: ' + value + '   result: ' + result)
 		})
 
-		if (deviceIsLikelyScene(device)) {
+		if (deviceIsLikelyScene(device.address)) {
 			logging.info('Device is likely a scene, will retry in 2 seconds')
 			// Double publishing, as scenes do not have retry mechanims in ISY https://forum.universal-devices.com/topic/11690-understanding-retries-in-isy/
 			// https://forum.universal-devices.com/topic/11690-understanding-retries-in-isy/
