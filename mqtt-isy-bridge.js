@@ -353,11 +353,11 @@ const _publishToISY = function(device, value, type) {
 	if (type === 'lock') {
 		logging.info('Sending lock command')
 		device.sendLockCommand(value, function(result) {
-			logging.info('device: ' + device + '   value set: ' + value + '   result: ' + result)
+			logging.info('device: ' + device.address + '   value set: ' + value + '   result: ' + result)
 		})
 	} else {
 		device.sendLightCommand(value, function(result) {
-			logging.info('device: ' + device + '   value set: ' + value + '   result: ' + result)
+			logging.info('device: ' + device.address + '   value set: ' + value + '   result: ' + result)
 		})
 
 		if (deviceIsLikelyScene(device.address)) {
