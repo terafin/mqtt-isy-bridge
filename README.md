@@ -30,7 +30,7 @@ services:
       TZ: America/Los_Angeles
       TOPIC_PREFIX: /your_topic_prefix  (eg: /energyusage)
 
-      ISY_IP: 10.0.90.15
+      ISY_IP: YOUR_ISY_IP
       CONFIG_PATH: /config/isy
       ISY_USERNAME: YOUR_USERNAME
       ISY_PASSWORD: YOUR_PASSWORD
