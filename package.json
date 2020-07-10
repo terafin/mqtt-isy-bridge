@@ -1,23 +1,23 @@
 {
-    "name": "mqtt-isy-bridge",
-    "version": "0.0.1",
-    "description": "Bridge ISY to and from MQTT",
-    "license": "MIT",
-    "main": "mqtt-isy-bridge.js",
-    "repository": {
-        "url": "https://github.com/terafin/mqtt-isy-bridge"
-    },
-    "scripts": {
-        "start": "node mqtt-isy-bridge.js"
-    },
-    "dependencies": {
-        "homeautomation-js-lib": "https://github.com/terafin/homeautomation-js-lib.git",
-        "isy-js": "https://github.com/terafin/isy-js.git",
-        "lodash": "4.17.16",
-        "repeat": "0.0.6",
-        "mqtt": "latest"
-    },
-    "engines": {
-        "node": ">=4"
-    }
+  "name": "mqtt-isy-bridge",
+  "version": "0.0.1",
+  "description": "Bridge ISY to and from MQTT",
+  "license": "MIT",
+  "main": "mqtt-isy-bridge.js",
+  "repository": {
+    "url": "https://github.com/terafin/mqtt-isy-bridge"
+  },
+  "scripts": {
+    "start": "node mqtt-isy-bridge.js"
+  },
+  "dependencies": {
+    "homeautomation-js-lib": "https://github.com/terafin/homeautomation-js-lib.git",
+    "isy-js": "https://github.com/terafin/isy-js.git",
+    "lodash": "4.17.16",
+    "repeat": "0.0.6",
+    "mqtt": "latest"
+  },
+  "engines": {
+    "node": ">=4"
+  }
 }
