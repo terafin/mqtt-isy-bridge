@@ -13,7 +13,7 @@
     "dependencies": {
         "homeautomation-js-lib": "https://github.com/terafin/homeautomation-js-lib.git",
         "isy-js": "https://github.com/terafin/isy-js.git",
-        "lodash": "latest",
+        "lodash": "4.17.16",
         "repeat": "0.0.6",
         "mqtt": "latest"
     },
