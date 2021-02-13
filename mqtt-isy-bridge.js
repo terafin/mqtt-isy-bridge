@@ -22,6 +22,16 @@ var topic_prefix = process.env.TOPIC_PREFIX
 
 const ISY = require('isy-js')
 
+if (_.isNil(isyUsername)) {
+    logging.warn('empty ISY_USERNAME, not starting')
+    process.abort()
+}
+
+if (_.isNil(isyPassword)) {
+    logging.warn('empty ISY_PASSWORD, not starting')
+    process.abort()
+}
+
 if (_.isNil(host)) {
     logging.warn('empty mqtt host, not starting')
     process.abort()
