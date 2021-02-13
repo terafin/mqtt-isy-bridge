@@ -13,9 +13,7 @@ const config_path = process.env.CONFIG_PATH
 const isyIP = process.env.ISY_IP
 const isyUsername = process.env.ISY_USERNAME
 const isyPassword = process.env.ISY_PASSWORD
-const host = process.env.MQTT_HOST
 const useHttps = false
-const elkEnabled = false
 const scenesInDeviceList = true
 const enableDebugLog = true
 var topic_prefix = process.env.TOPIC_PREFIX
@@ -29,11 +27,6 @@ if (_.isNil(isyUsername)) {
 
 if (_.isNil(isyPassword)) {
     logging.warn('empty ISY_PASSWORD, not starting')
-    process.abort()
-}
-
-if (_.isNil(host)) {
-    logging.warn('empty mqtt host, not starting')
     process.abort()
 }
 
@@ -308,7 +301,7 @@ const handleISYInitialized = function() {
 // Set up modules
 config.load_path(config_path)
 
-var isy = new ISY.ISY(isyIP, isyUsername, isyPassword, elkEnabled, deviceChangeCallback, useHttps, scenesInDeviceList, enableDebugLog, variableChangeCallback)
+var isy = new ISY.ISY(isyIP, isyUsername, isyPassword, false, deviceChangeCallback, useHttps, scenesInDeviceList, enableDebugLog, variableChangeCallback)
 
 isy.initialize(handleISYInitialized)
 
