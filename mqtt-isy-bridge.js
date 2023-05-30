@@ -59,7 +59,7 @@ const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publish
     const updatedProperty = device.updatedProperty
     const updateType = device.updateType
 
-    logging.info('publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + topic)
+    logging.info('publishDeviceUpdate: ' + device.name + '   name: ' + device.deviceFriendlyName + '  connection: ' + device.connectionType + '  topic: ' + topic + '  type: ' + type)
 
     var value = null
     var topicsToPublish = []
@@ -178,7 +178,7 @@ const publishDeviceUpdate = function(device, topic, type, isKnownDevice, publish
         }
 
         if (!_.isNil(propertyValue)) {
-            topicsToPublish.push(topic + '/' + propertyMapping[property])
+            topicsToPublish.push(mqtt_helpers.generateTopic(topic, propertyMapping[property]))
             valuesToPublish.push(propertyValue.toString())
         }
     })
@@ -238,7 +238,7 @@ const _deviceChangeCallback = function(isy, device, publishAll) {
     var isKnownDevice = true
 
     if (_.isNil(topic)) {
-        topic = topic_prefix + device.address
+        topic = mqtt_helpers.generateTopic(topic_prefix, device.address)
         if (_.isNil(type)) {
             type = 'switch'
         }
@@ -308,8 +308,13 @@ isy.initialize(handleISYInitialized)
 // Setup MQTT
 
 var connectedEvent = function() {
-    logging.info('MQTT Connected')
-    client.subscribe('#', { qos: 1 })
+    logging.info('ISY - MQTT Connected')
+
+    const baseTopic = mqtt_helpers.generateTopic(topic_prefix, '#') + '#'
+    client.subscribe(baseTopic, { qos: 1 })
+    logging.info('Subscribed to: ' + baseTopic)
+    client.subscribe('/isy/action/', { qos: 1 })
+    
     health.healthyEvent()
 }
 
@@ -333,10 +338,16 @@ client.on('message', (topic, message) => {
     var refID = null
     var type = null
     if (topic.endsWith('/set')) {
-        const modifiedDevice = _.first(topic.split('/set'))
+        logging.info('got a set topic: ' + topic + '   message: ' + message)
+        var modifiedDevice = _.first(topic.split('/set'))
+        if ( modifiedDevice.startsWith(topic_prefix) ) {
+            modifiedDevice = _.last(_.split(modifiedDevice, '/'))
+        }
         refID = idForTopic(modifiedDevice)
-
-        logging.debug('topic: ' + topic + '   mapped: ' + refID)
+        if ( _.isNil(refID) ) {
+            refID = modifiedDevice
+        }
+        logging.info('topic: ' + topic + '   mapped: ' + refID)
 
     } else if (topic.startsWith('/isy/action/')) {
         logging.debug(topic + ':' + message)
@@ -349,6 +360,8 @@ client.on('message', (topic, message) => {
     if (!_.isNil(refID)) {
         if (_.isNil(type)) {
             type = typeForId(null, refID)
+            if ( _.isNil(type))
+                type = 'switch'
         }
 
         handleDeviceAction(type, refID, message)
@@ -467,6 +480,8 @@ config.on('config-loaded', () => {
         indexToTopicMap[deviceInfo.id] = deviceInfo.topic
         topicToIndexMap[deviceInfo.topic] = deviceInfo.id
         indexToTypeMap[deviceInfo.id] = deviceInfo.type
+        logging.info("subscribing to " + deviceInfo.topic + '/set')
+        client.subscribe(deviceInfo.topic + '/set', { qos: 1 })
 
     })
 })
@@ -479,7 +494,7 @@ const topicForId = function(id) {
 const typeForId = function(device, id) {
     var result = indexToTypeMap[id]
 
-    if (_.isNil(result)) {
+    if (_.isNil(result) && !_.isNil(device)) {
 
         switch (device.deviceType) {
             case 'Thermostat':
