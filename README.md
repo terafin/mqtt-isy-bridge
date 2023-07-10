@@ -3,18 +3,20 @@
 This is a simple docker container that I use to bridge to/from my MQTT bridge.
 
 I have a collection of bridges, and the general format of these begins with these environment variables:
+
 ```
       TOPIC_PREFIX: /your_topic_prefix  (eg: /some_topic_prefix/somthing)
       MQTT_HOST: YOUR_MQTT_URL (eg: mqtt://mqtt.yourdomain.net)
       (OPTIONAL) MQTT_USER: YOUR_MQTT_USERNAME
       (OPTIONAL) MQTT_PASS: YOUR_MQTT_PASSWORD
-````
+```
 
 For changing states '/set' commands also work, eg:
 
 publish this to turn on the outlet with the ISY address: 45_24_9e_1
+
 ```
-   topic: /isy/45_24_9e_1/set 
+   topic: /isy/45_24_9e_1/set
    value: 1
 ```
 
@@ -24,7 +26,7 @@ Here's an example docker compose:
 version: '3.3'
 services:
   mqtt-egauge-bridge:
-    image: terafin/mqtt-isy-bridge:latest
+    image: ghcr.io/terafin/mqtt-isy-bridge:latest
     environment:
       LOGGING_NAME: mqtt-isy-bridge
       TZ: America/Los_Angeles
@@ -38,13 +40,13 @@ services:
       HEALTH_CHECK_PORT: "3001"
       HEALTH_CHECK_TIME: "120"
       HEALTH_CHECK_URL: /healthcheck
-      
+
       MQTT_HOST: YOUR_MQTT_URL (eg: mqtt://mqtt.yourdomain.net)
       (OPTIONAL) MQTT_USER: YOUR_MQTT_USERNAME
       (OPTIONAL) MQTT_PASS: YOUR_MQTT_PASSWORD
 ```
 
-Here's an example publish for my setup: 
+Here's an example publish for my setup:
 
 Note: this is Address / status:
 
