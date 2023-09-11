@@ -393,13 +393,19 @@ const _publishToISY = function(device, value, type) {
     }
 }
 
+const fixDeviceID = function(str) {
+    str = str.replace(/[\._]/g, ' ')
+
+    return str
+}
+
 const publishToISY = function(deviceID, value, type) {
     logging.debug('publish to ISY', {
         action: 'set-value',
         refID: deviceID,
         value: value
     })
-    const device = isy.getDevice(deviceID)
+    const device = isy.getDevice(fixDeviceID(deviceID))
 
     if (_.isNil(device)) {
         logging.error('could not resolve device: ' + deviceID)
