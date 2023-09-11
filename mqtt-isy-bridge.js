@@ -394,7 +394,11 @@ const _publishToISY = function(device, value, type) {
 }
 
 const fixDeviceID = function(str) {
-    str = str.replace(/[\._]/g, ' ')
+    const inputStr = str
+
+    str = _.replace(str, /[\._]/g, ' ')
+
+    logging.info(' input str: ' + inputStr + '   output str: ' + str)
 
     return str
 }
