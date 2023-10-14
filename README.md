@@ -25,7 +25,7 @@ Here's an example docker compose:
 ```
 version: '3.3'
 services:
-  mqtt-egauge-bridge:
+  mqtt-isy-bridge:
     image: ghcr.io/terafin/mqtt-isy-bridge:latest
     environment:
       LOGGING_NAME: mqtt-isy-bridge
@@ -33,7 +33,6 @@ services:
       TOPIC_PREFIX: /your_topic_prefix  (eg: /energyusage)
 
       ISY_IP: YOUR_ISY_IP
-      CONFIG_PATH: /config/isy
       ISY_USERNAME: YOUR_USERNAME
       ISY_PASSWORD: YOUR_PASSWORD
 

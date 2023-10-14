@@ -58,3 +58,7 @@ typings/
 .env
 
 .vscode
+
+ISYNodesDump.json
+ISYConfigDump.json
+ISYStatusDump.json
