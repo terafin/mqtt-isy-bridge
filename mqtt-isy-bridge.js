@@ -43,8 +43,6 @@ const driver = new ISYDriver(isyIP, isyUsername, isyPassword)
 
 function getType(entity) {
     return entity.constructor.name
-    var x = Object.prototype.toString.call(entity)
-    return x.split(" ")[1].split(']')[0].toLowerCase()
 }
 
 
@@ -52,7 +50,24 @@ function getType(entity) {
 const handleDeviceAction = function (device, value) {
     logging.info('handleDeviceAction: ' + device.name + '  value: ' + value + '  type: ' + getType(device))
     var isOn = Number(value) >= Number(1)
-    device.updateIsOn(isOn)
+
+    switch (getType(device)) {
+        case 'InsteonRelayDevice':
+        case 'InsteonRelaySwitchDevice':
+            device.updateIsOn(isOn)
+            break;
+        case 'ISYScene':
+            device.updateIsOn(isOn)
+
+            // Repeat after a second, really hate that this is needed
+            interval(async () => {
+                device.updateIsOn(isOn)
+            }, 1000)
+            break;
+        default:
+            logging.error('Unhandled device type: ' + getType(device))
+            return
+    }
 }
 
 const topicToPublishForDevice = function (device) {
