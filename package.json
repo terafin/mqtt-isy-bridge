@@ -11,13 +11,13 @@
         "start": "node mqtt-isy-bridge.js"
     },
     "dependencies": {
-        "homeautomation-js-lib": "https://github.com/terafin/homeautomation-js-lib.git",
+        "homeautomation-js-lib": "terafin/homeautomation-js-lib",
         "isy-js": "home-terafin/isy-js#fixing-scenes",
         "lodash": "latest",
         "interval-promise": "latest",
         "mqtt": "latest"
     },
     "engines": {
-        "node": ">=4"
+        "node": ">=10"
     }
 }
