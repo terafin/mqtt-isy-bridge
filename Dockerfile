@@ -4,6 +4,7 @@ RUN apk add --no-cache git tzdata ; mkdir -p /usr/node_app
 COPY . /usr/app
 WORKDIR /usr/app
 
+RUN npm cache clear -f
 RUN npm install --production
 
 CMD ["npm", "start"]
