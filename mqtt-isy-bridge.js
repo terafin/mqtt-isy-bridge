@@ -60,7 +60,7 @@ const handleDeviceAction = function (device, value) {
             device.updateIsOn(isOn)
 
             // Repeat after a second, really hate that this is needed
-            interval(async () => {
+            setTimeout(function () {
                 device.updateIsOn(isOn)
             }, 1000)
             break;
