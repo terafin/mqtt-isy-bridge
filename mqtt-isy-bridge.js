@@ -47,44 +47,53 @@ function getType(entity) {
 
 
 
-const handleDeviceAction = function (device, value) {
-    logging.info('handleDeviceAction: ' + device.name + '  value: ' + value + '  type: ' + getType(device))
-    var isOn = Number(value) >= Number(1)
+async function handleDeviceAction(device, value) {
+    try {
+        logging.info('handleDeviceAction: ' + device.name + '  value: ' + value + '  type: ' + getType(device))
+        var isOn = Number(value) >= Number(1)
+        const notes = await device.getNotes()
+        const isLoad = _.isNil(notes) ? false : notes["isLoad"]
+        var type = getType(device)
+        if (isLoad)
+            type = 'InsteonRelayDevice'
 
-    switch (getType(device)) {
-        case 'InsteonRelayDevice':
-        case 'InsteonRelaySwitchDevice':
-            device.updateIsOn(isOn)
-            break;
-        case 'InsteonDimmableDevice':
-            {
-                var targetValue = 0
-                switch (Number(value)) {
-                    case 0:
-                        targetValue = 0
-                        break;
-                    case 1:
-                        targetValue = 100
-                        break;
-                    default:
-                        targetValue = Number(value)
-                        break;
-
-                }
-                device.updateBrightnessLevel(targetValue)
-                break;
-            }
-        case 'ISYScene':
-            device.updateIsOn(isOn)
-
-            // Repeat after a second, really hate that this is needed
-            setTimeout(function () {
+        switch (type) {
+            case 'InsteonRelayDevice':
+            case 'InsteonRelaySwitchDevice':
                 device.updateIsOn(isOn)
-            }, 1000)
-            break;
-        default:
-            logging.error('Unhandled device type: ' + getType(device))
-            return
+                break;
+            case 'InsteonDimmableDevice':
+                {
+                    var targetValue = 0
+                    switch (Number(value)) {
+                        case 0:
+                            targetValue = 0
+                            break;
+                        case 1:
+                            targetValue = 100
+                            break;
+                        default:
+                            targetValue = Number(value)
+                            break;
+
+                    }
+                    device.updateBrightnessLevel(targetValue)
+                    break;
+                }
+            case 'ISYScene':
+                device.updateIsOn(isOn)
+
+                // Repeat after a second, really hate that this is needed
+                setTimeout(function () {
+                    device.updateIsOn(isOn)
+                }, 1000)
+                break;
+            default:
+                logging.error('Unhandled device type: ' + getType(device))
+                return
+        }
+    } catch (error) {
+        logging.error('handleDeviceAction: ' + error)
     }
 }
 
@@ -110,9 +119,14 @@ const publishInitialState = function (device) {
     publishPropertyUpdate(device, ISY.Props.Status, device.isOn ? 1 : 0)
 }
 
-const publishPropertyUpdate = function (device, propertyName, value) {
-    const topicToPublish = topicToPublishForDevice(device)
+async function publishPropertyUpdate(device, propertyName, value) {
+    var topicToPublish = topicToPublishForDevice(device)
     var options = { retain: 1, qos: 1 }
+    const notes = await device.getNotes()
+    const isLoad = _.isNil(notes) ? false : notes["isLoad"]
+    const location = _.isNil(notes) ? null : notes["location"]
+    const description = _.isNil(notes) ? null : notes["description"]
+    const spoken = _.isNil(notes) ? null : notes["spoken"]
 
     switch (propertyName) {
         case 'isOn':
@@ -123,6 +137,9 @@ const publishPropertyUpdate = function (device, propertyName, value) {
             } else {
                 value = 0
             }
+            if (isLoad)
+                topicToPublish += "/set"
+
             client.smartPublish(topicToPublish, value, options)
             break;
         default:
@@ -131,7 +148,7 @@ const publishPropertyUpdate = function (device, propertyName, value) {
     }
 }
 
-const configureDevice = function (device) {
+async function configureDevice(device) {
     const topic = topicToPublishForDevice(device)
 
     topicToAddressMap[topic] = device.address
@@ -141,12 +158,16 @@ const configureDevice = function (device) {
     if (!subscribed_topics.includes(topicToSubscribeTo)) {
         subscribed_topics.push(topicToSubscribeTo)
         logging.info('Subscribed to: ' + topicToSubscribeTo)
+        await device.refreshNotes()
+        const notes = await device.getNotes()
         client.subscribe(topicToSubscribeTo, { qos: 1 })
     }
 }
 
-const monitorDevice = function (device) {
-    device.on('PropertyChanged', (propertyName, value, oldValue, formattedValue) => {
+
+
+async function monitorDevice(device) {
+    device.on('PropertyChanged', async (propertyName, value, oldValue, formattedValue) => {
         logging.info('Property Changed: ' + propertyName + ' ' + value + ' ' + oldValue + ' ' + formattedValue)
         publishPropertyUpdate(device, propertyName, value)
         health.healthyEvent()
@@ -215,6 +236,10 @@ client.on('message', (topic, message) => {
         logging.info('got a device: ' + device.name + '   message: ' + message)
     }
     if (!_.isNil(device)) {
-        handleDeviceAction(device, message)
+        try {
+            handleDeviceAction(device, message)
+        } catch (error) {
+            logging.error('error handling device update: ' + error)
+        }
     }
 })
