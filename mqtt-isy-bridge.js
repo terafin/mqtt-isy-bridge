@@ -56,6 +56,24 @@ const handleDeviceAction = function (device, value) {
         case 'InsteonRelaySwitchDevice':
             device.updateIsOn(isOn)
             break;
+        case 'InsteonDimmableDevice':
+            {
+                var targetValue = 0
+                switch (Number(value)) {
+                    case 0:
+                        targetValue = 0
+                        break;
+                    case 1:
+                        targetValue = 100
+                        break;
+                    default:
+                        targetValue = Number(value)
+                        break;
+
+                }
+                device.updateBrightnessLevel(targetValue)
+                break;
+            }
         case 'ISYScene':
             device.updateIsOn(isOn)
 
@@ -98,6 +116,7 @@ const publishPropertyUpdate = function (device, propertyName, value) {
 
     switch (propertyName) {
         case 'isOn':
+        case 'brightnesslevel':
         case ISY.Props.Status:
             if (value >= 1) {
                 value = 1
@@ -121,6 +140,7 @@ const configureDevice = function (device) {
 
     if (!subscribed_topics.includes(topicToSubscribeTo)) {
         subscribed_topics.push(topicToSubscribeTo)
+        logging.info('Subscribed to: ' + topicToSubscribeTo)
         client.subscribe(topicToSubscribeTo, { qos: 1 })
     }
 }
