@@ -137,8 +137,10 @@ async function publishPropertyUpdate(device, propertyName, value) {
             } else {
                 value = 0
             }
-            if (isLoad)
+            if (isLoad) {
                 topicToPublish += "/set"
+                options.retain = 0;
+            }
 
             client.smartPublish(topicToPublish, value, options)
             break;
