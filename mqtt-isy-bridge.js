@@ -82,11 +82,6 @@ async function handleDeviceAction(device, value) {
                 }
             case 'ISYScene':
                 device.updateIsOn(isOn)
-
-                // Repeat after a second, really hate that this is needed
-                setTimeout(function () {
-                    device.updateIsOn(isOn)
-                }, 1000)
                 break;
             default:
                 logging.error('Unhandled device type: ' + getType(device))
