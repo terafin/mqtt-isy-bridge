@@ -61,6 +61,7 @@ async function handleDeviceAction(device, value) {
             case 'InsteonRelayDevice':
             case 'InsteonRelaySwitchDevice':
                 device.updateIsOn(isOn)
+                device.updateIsOn(isOn)
                 break;
             case 'InsteonDimmableDevice':
                 {
@@ -78,9 +79,11 @@ async function handleDeviceAction(device, value) {
 
                     }
                     device.updateBrightnessLevel(targetValue)
+                    device.updateBrightnessLevel(targetValue)
                     break;
                 }
             case 'ISYScene':
+                device.updateIsOn(isOn)
                 device.updateIsOn(isOn)
                 break;
             default:
