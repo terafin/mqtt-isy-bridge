@@ -16,6 +16,9 @@ const isyPassword = process.env.ISY_PASSWORD
 var topic_prefix = process.env.TOPIC_PREFIX
 var subscribed_topics = []
 
+const intervalBetweenRetries = 1
+const retryAttempts = 3
+
 // Maps
 var topicToAddressMap = {}
 
@@ -46,6 +49,18 @@ function getType(entity) {
 }
 
 
+function runISYFunction(func, times, interval) {
+    let count = 0;
+
+    const intervalId = setInterval(() => {
+        if (count < times) {
+            func(); // Call the passed function
+            count++;
+        } else {
+            clearInterval(intervalId); // Stop after the specified number of times
+        }
+    }, interval);
+}
 
 async function handleDeviceAction(device, value) {
     try {
@@ -60,8 +75,7 @@ async function handleDeviceAction(device, value) {
         switch (type) {
             case 'InsteonRelayDevice':
             case 'InsteonRelaySwitchDevice':
-                device.updateIsOn(isOn)
-                device.updateIsOn(isOn)
+                runISYFunction(() => device.updateIsOn(isOn), retryAttempts, intervalBetweenRetries);
                 break;
             case 'InsteonDimmableDevice':
                 {
@@ -78,13 +92,11 @@ async function handleDeviceAction(device, value) {
                             break;
 
                     }
-                    device.updateBrightnessLevel(targetValue)
-                    device.updateBrightnessLevel(targetValue)
+                    runISYFunction(() => device.updateBrightnessLevel(targetValue), retryAttempts, intervalBetweenRetries);
                     break;
                 }
             case 'ISYScene':
-                device.updateIsOn(isOn)
-                device.updateIsOn(isOn)
+                runISYFunction(() => device.updateIsOn(isOn), retryAttempts, intervalBetweenRetries);
                 break;
             default:
                 logging.error('Unhandled device type: ' + getType(device))
